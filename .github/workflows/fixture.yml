@@ -1,5 +1,11 @@
 name: Disposable artifact transfer fixture
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        type: choice
+        options: [fixture, metadata-controls]
+        default: fixture
 permissions:
   contents: read
   actions: read
@@ -12,6 +18,7 @@ jobs:
       - uses: ./.github/actions/probe
         env:
           GH_TOKEN: ${{ github.token }}
+          PROBE_SUITE: ${{ inputs.suite }}
       - name: Preserve sanitized evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
