@@ -85,18 +85,20 @@ final=rpc('finalize','FinalizeArtifact',{**ids,'name':NAME,'size':str(len(DATA))
 aid=str(final['artifact_id'])
 rpc('list','ListArtifacts',{**ids,'id_filter':aid})
 signed=rpc('results.sign','GetSignedArtifactURL',{**ids,'name':NAME})['signed_url']
+observed={}
 for old in [False,True]:
     s,h,d=download('results.download.'+('old-version' if old else 'default'),signed,old=old)
     assert s==200 and d==DATA,(s,len(d))
-    expected=STORED if old else 'application/json'
-    assert h['content-type']==expected,(h['content-type'].encode('latin-1').hex(),expected.encode('latin-1').hex())
+    observed['old-version' if old else 'default']=h['content-type'].encode('latin-1').hex()
+    if not old:assert h['content-type']=='application/json',observed['default']
 repo=os.environ['GITHUB_REPOSITORY'];run=os.environ['GITHUB_RUN_ID']
 for old in [False,True]:
     s,h,d=download('rest.download.'+('old-version' if old else 'default'),
         f'https://api.github.com/repos/{repo}/actions/artifacts/{aid}/zip',GH_TOKEN,old)
     assert s==200 and d==DATA,(s,len(d))
 state={'repository':repo,'run_id':run,'artifact_id':aid,'name':NAME,'protocol_version':7,
-       'create_mime_type':'application/json','stored_content_type_bytes_hex':STORED.encode('latin-1').hex(),
+       'create_mime_type':'application/json','put_content_type_bytes_hex':STORED.encode('latin-1').hex(),
+       'observed_content_type_bytes_hex':observed,
        'body_bytes':len(DATA),'body_sha256':hashlib.sha256(DATA).hexdigest(),
        'run_backend_id':PLAN,'job_backend_id':JOB,'blob':shape(signed)}
 (OUT/'state.json').write_text(json.dumps(state,indent=2)+'\n')
