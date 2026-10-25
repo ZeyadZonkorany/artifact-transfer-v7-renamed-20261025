@@ -1,0 +1,5 @@
+name: Byte-exact artifact fixture
+description: Create one raw version-7 artifact and preserve sanitized HTTP evidence
+runs:
+  using: node24
+  main: launcher.cjs
